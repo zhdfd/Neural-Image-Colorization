@@ -79,14 +79,14 @@ class Trainer:
         example = self.next_example(height=self.training_height, width=self.training_width)
         example_condition = tf.slice(example, [0, 0, 2], [self.training_height, self.training_width, 1])
         example_condition = tf.div(example_condition, 255.)
-        example_condition = tf.expand_dims(example_condition, axis=0)
+        #example_condition = tf.expand_dims(example_condition, axis=0)
         example_label = tf.slice(example, [0, 0, 0], [self.training_height, self.training_width, 2])
-        example_label = tf.expand_dims(example_label, axis=0)
+        #example_label = tf.expand_dims(example_label, axis=0)
 
-        #capacity = self.batch_size * 2
-        #batch_condition, batch_label = tf.train.batch([example_condition, example_label], self.batch_size,
-        #                                              num_threads=4,
-        #                                              capacity=capacity)
+        capacity = self.batch_size * 2
+        batch_condition, batch_label = tf.train.batch([example_condition, example_label], self.batch_size,
+                                                      num_threads=4,
+                                                      capacity=capacity)
 
         # delete this when done (retrieves image to render while training)
         CURRENT_PATH = os.path.dirname(os.path.realpath(__file__))
@@ -121,12 +121,12 @@ class Trainer:
                 # Update discriminator DISC_PER_GEN times
                 for _ in range(DISC_PER_GEN):
                     # _z_batch = z_batch.eval()
-                    feed_dict = {x_ph: example_condition.eval(), y_ph: example_label.eval()}
+                    feed_dict = {x_ph: batch_condition.eval(), y_ph: batch_label.eval()}
                     __, d_loss = self.session.run([disc_update, disc_loss], feed_dict=feed_dict)
 
                 # Update generator
                 # _z_batch = z_batch.eval()
-                feed_dict = {x_ph: example_condition.eval()}
+                feed_dict = {x_ph: batch_condition.eval()}
                 _, g_loss, summary = self.session.run([gen_update, gen_loss, merged], feed_dict=feed_dict)
 
                 train_writer.add_summary(summary, i)

@@ -7,9 +7,9 @@ from trainer import Trainer
 
 # Model hyperparamaters
 opts = {
-    'batch_size': 64,
+    'batch_size': 4,
     'iterations': 1200000,
-    'learning_rate': 2e-6,
+    'learning_rate': .0002,
     'model_path': None,  # path of previously trained model to continue training from
     'print_every': 100,
     'save_every': 10000,

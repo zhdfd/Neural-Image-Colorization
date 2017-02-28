@@ -17,17 +17,15 @@ class Generator(net.Net):
         :return:
         """
         with tf.variable_scope('generator'):
-            #inputs = tf.concat(axis=3, values=[z, x])
-
             # Encoder
             self.conv1e = self.conv_layer(x, nf, act=None, norm=False, name='conv1e')
-            self.conv2e = self.conv_layer(self.conv1e, nf * 2, act=self.leaky_relu, name='conv2e')
-            self.conv3e = self.conv_layer(self.conv2e, nf * 4, act=self.leaky_relu, name='conv3e')
-            self.conv4e = self.conv_layer(self.conv3e, nf * 8, act=self.leaky_relu, name='conv4e')
-            self.conv5e = self.conv_layer(self.conv4e, nf * 8, act=self.leaky_relu, name='conv5e')
-            self.conv6e = self.conv_layer(self.conv5e, nf * 8, act=self.leaky_relu, name='conv6e')
-            self.conv7e = self.conv_layer(self.conv6e, nf * 8, act=self.leaky_relu, name='conv7e')
-            self.conv8e = self.conv_layer(self.conv7e, nf * 8, act=self.leaky_relu, name='conv8e')
+            self.conv2e = self.conv_layer(self.conv1e, nf * 2, name='conv2e')
+            self.conv3e = self.conv_layer(self.conv2e, nf * 4, name='conv3e')
+            self.conv4e = self.conv_layer(self.conv3e, nf * 8, name='conv4e')
+            self.conv5e = self.conv_layer(self.conv4e, nf * 8, name='conv5e')
+            self.conv6e = self.conv_layer(self.conv5e, nf * 8, name='conv6e')
+            self.conv7e = self.conv_layer(self.conv6e, nf * 8, name='conv7e')
+            self.conv8e = self.conv_layer(self.conv7e, nf * 8, name='conv8e')
 
             # U-Net decoder
             self.conv1d = self.__residual_layer(self.conv8e, self.conv7e, nf * 8, drop=True, name='conv1d')
@@ -81,5 +79,37 @@ class Generator(net.Net):
         """
 
         conv = self.__upsample_layer(inputs, out_size, name, act=act, norm=norm, drop=drop)
-        join = conv + skip
+        join = tf.add(conv, skip)
         return join
+
+    # Batch normalize inputs to reduce covariate shift and improve the efficiency of training
+    def batch_normalize(self, inputs, num_maps, decay=.9):
+        with tf.variable_scope("batch_normalization"):
+            # Trainable variables for scaling and offsetting our inputs
+            scale = tf.get_variable('scale', initializer=tf.ones([num_maps], dtype=tf.float32), trainable=True)
+            tf.summary.histogram('scale', scale)
+            offset = tf.get_variable('offset', initializer=tf.constant(.1, shape=[num_maps]), trainable=True)
+            tf.summary.histogram('offset', offset)
+
+            # Mean and variances related to our current batch
+            batch_mean, batch_var = tf.nn.moments(inputs, [0, 1, 2])
+
+            # Create an optimizer to maintain a 'moving average'
+            ema = tf.train.ExponentialMovingAverage(decay=decay)
+
+            def ema_retrieve():
+                return ema.average(batch_mean), ema.average(batch_var)
+
+            # If the net is being trained, update the average every training step
+            def ema_update():
+                ema_apply = ema.apply([batch_mean, batch_var])
+
+                # Make sure to compute the new means and variances prior to returning their values
+                with tf.control_dependencies([ema_apply]):
+                    return tf.identity(batch_mean), tf.identity(batch_var)
+
+            # Retrieve the means and variances and apply the BN transformation
+            mean, var = tf.cond(tf.equal(self.is_training, True), ema_update, ema_retrieve)
+            bn_inputs = tf.nn.batch_normalization(inputs, mean, var, offset, scale, self.epsilon)
+
+        return bn_inputs
