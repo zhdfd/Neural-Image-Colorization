@@ -2,13 +2,19 @@
 
 <img src="" width="640px" align="right">
 
-This is a Tensorflow implementation of *[Image-to-Image Translation with Conditional Adversarial Networks](https://arxiv.org/pdf/1611.07004v1.pdf)* that aims to infer a mapping from X to Y, where X is a single channel grayscale image and Y is 3-channel "colorized" version of that image. We make use of [Generative Adversarial Networks](https://arxiv.org/pdf/1406.2661.pdf) conditioned on the input to teach a generative neural network the highly complex and abstract function of automatic photo colorization, a cutting-edge technology in the field of machine learning. 
-
-Architectural deficiencies presented in Berkley's paper were modified to improve training. Specifically, its logistic loss proved to be inefficient at learning the approproate probability distribution for the generative model and in turn made the training process highly time consuming. To resolve this, architectural design elements were borrowed from the [Wasserstein GAN](https://arxiv.org/pdf/1701.07875.pdf). The final sigmoidal activation of the discriminator was removed which improved gradient flow and reduced vanishing gradients. Intuitively, this essentially makes the discriminator a critic; rather than discriminating between real and generated samples in a binary manner, it replies "how real" the given sample is and returns a number. 
-
-Other notable elements borrowed from the Wasserstein GAN include using the RMSProp and proper clipping of the discriminator's gradients.
+This is a Tensorflow implementation of *[Image-to-Image Translation with Conditional Adversarial Networks](https://arxiv.org/pdf/1611.07004v1.pdf)* that aims to infer a mapping from X to Y, where X is a single channel grayscale image and Y is 3-channel "colorized" version of that image. We make use of *[Generative Adversarial Networks](https://arxiv.org/pdf/1406.2661.pdf)* conditioned on the input to teach a generative neural network the highly complex and abstract function of automatic photo colorization, a currently cutting-edge technology in the field of machine learning. 
 
 The purpose of this repository is to port the image-to-image translation experiment over to TensorFlow.
+
+#### Implementation Architecture
+
+Architectural deficiencies presented in Berkley's paper were modified to improve training. Specifically, its logistic loss proved to be inefficient at learning the appropriate probability distribution for the generative model and in turn made the training process highly time consuming. To resolve this, architectural design elements were borrowed from the [Wasserstein GAN](https://arxiv.org/pdf/1701.07875.pdf). The final sigmoidal activation of the discriminator was removed which improved gradient flow and reduced [vanishing gradients](https://www.quora.com/What-is-the-vanishing-gradient-problem). Intuitively, this essentially makes the discriminator a critic; rather than discriminating between real and generated samples in a binary manner, it replies "how real" the given sample is and returns a number. 
+
+Other notable elements borrowed from the Wasserstein GAN include using the [RMSProp](https://www.quora.com/What-is-an-intuitive-explanation-of-RMSProp) and proper clipping of the discriminator's gradients.
+
+#### Image Representations
+
+Rather than training a generative model to produce a novel three-channel RGB image, I take advantage of the [HSV](https://en.wikipedia.org/wiki/HSL_and_HSV) encoding to train it to produce only two channels. Because the <b>v</b>alue channel alone contains the grayscale information of an image, we only need to learn the appropriate <b>h</b>ue and <b>s</b>aturation channels, drastically reducing training run time; the generator does not need to generate the image from scratch, it only needs to learn the color hues and their respective intensities. 
 
 ## Results
 
