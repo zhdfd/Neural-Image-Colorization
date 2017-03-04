@@ -2,11 +2,13 @@
 
 <img src="" width="640px" align="right">
 
-This is a Tensorflow implementation of *[Image-to-Image Translation with Conditional Adversarial Networks]()* that aims to infer a mapping from X to Y, where X is a single channel "black and white" image and Y is 3-channel "colorized" version of that image.
+This is a Tensorflow implementation of *[Image-to-Image Translation with Conditional Adversarial Networks](https://arxiv.org/pdf/1611.07004v1.pdf)* that aims to infer a mapping from X to Y, where X is a single channel grayscale image and Y is 3-channel "colorized" version of that image. We make use of [Generative Adversarial Networks](https://arxiv.org/pdf/1406.2661.pdf) conditioned on the input to teach a generative neural network the highly complex and abstract function of automatic photo colorization, a cutting-edge technology in the field of machine learning. 
 
-We make use of [Generative Adversarial Networks]() conditioned on the input to teach a generative neural network how to produce our desired results.
+Architectural deficiencies presented in Berkley's paper were modified to improve training. Specifically, its logistic loss proved to be inefficient at learning the approproate probability distribution for the generative model and in turn made the training process highly time consuming. To resolve this, architectural design elements were borrowed from the [Wasserstein GAN](https://arxiv.org/pdf/1701.07875.pdf). The final sigmoidal activation of the discriminator was removed which improved gradient flow and reduced vanishing gradients. Intuitively, this essentially makes the discriminator a critic; rather than discriminating between real and generated samples in a binary manner, it replies "how real" the given sample is and returns a number. 
 
-The purpose of this repository is to port the model over to TensorFlow.
+Other notable elements borrowed from the Wasserstein GAN include using the RMSProp and proper clipping of the discriminator's gradients.
+
+The purpose of this repository is to port the image-to-image translation experiment over to TensorFlow.
 
 ## Results
 
@@ -42,7 +44,7 @@ The purpose of this repository is to port the model over to TensorFlow.
 
 ## Usage
 
-To colorize a greyscale image using a trained model, invoke *colorize.py* and supply both the desired input image path and the saved model path.
+To colorize a grayscale image using a trained model, invoke *colorize.py* and supply both the desired input image path and the saved model path. The input image does not need to be a single-channel image. Given inputs will automatically be downsmapled to one channel.
 
 ```sh
 python colorize.py 'path/to/input/image' 'path/to/saved/model'
@@ -58,7 +60,7 @@ python train.py 'path/to/training/dir'
 
 * [colorize.py](./src/colorize.py)
 
-    Main script that interprets the user's desired actions through parsed arguments. 
+    User script that colorizes a grayscale image given an already-trained model. 
     
 * [generator.py](./src/generator.py)
     
@@ -67,11 +69,19 @@ python train.py 'path/to/training/dir'
 * [discriminator.py](./src/discriminator.py)
     
     Contains the discriminative net that can discriminate between synthesized colorized images and ground-truth images.
+   
+* [helpers.py](./src/helpers.py)
+    
+    Helper class containing various methods with their functions ranging from image retrieval to auxiliary math helpers.
     
 * [net.py](./src/net.py)
     
     Contains the neural network super class with universal layer construction and instance normalization methods. 
     
 * [train.py](./src/train.py)
+    
+    User script that trains a new generative model the can colorize any given grayscale image assuming the size and variety of the training set is sufficient.
+   
+* [trainer.py](./src/trainer.py)
     
     Contains a Trainer class that is responsible for training the generative adversarial networks and any related routines such as retrieving training data.

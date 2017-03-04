@@ -1,5 +1,7 @@
 .idea
 __pycache__/
 *.jpg
-lib/
+lib
+!lib/readme_examples
 output/
+log/
