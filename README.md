@@ -17,35 +17,41 @@ The purpose of this repository is to port the model over to TensorFlow.
     <th>Ground-Truth</th>
   </tr>
   <tr>
-    <td><img src="lib/" width="100%"></td>
-    <td><img src="lib/" width=100%"></td> 
-    <td><img src="lib/" width=100%"></td> 
+    <td><img src="lib/readme_examples" width="100%"></td>
+    <td><img src="lib/readme_examples" width=100%"></td> 
+    <td><img src="lib/readme_examples" width=100%"></td> 
   </tr>
   <tr>
-    <td><img src="lib/" width="100%"></td>
-    <td><img src="lib/" width="100%"></td> 
-    <td><img src="lib/" width=100%"></td> 
+    <td><img src="lib/readme_examples" width="100%"></td>
+    <td><img src="lib/readme_examples" width="100%"></td> 
+    <td><img src="lib/readme_examples" width=100%"></td> 
   </tr>
   <tr>
-    <td><img src="lib/" width="100%"></td>
-    <td><img src="lib/" width="100%"></td> 
-    <td><img src="lib/" width=100%"></td> 
+    <td><img src="lib/readme_examples" width="100%"></td>
+    <td><img src="lib/readme_examples" width="100%"></td> 
+    <td><img src="lib/readme_examples" width=100%"></td> 
   </tr>
 </table>
 
 ## Prerequisites
 
 * [Python 3.5](https://www.python.org/downloads/release/python-350/)
-* [TensorFlow](https://www.tensorflow.org/) (>= r0.12)
+* [TensorFlow](https://www.tensorflow.org/) (>= r1.0)
+* [scikit-image](http://scikit-image.org/docs/dev/api/skimage.html)
+* [NumPy](http://www.numpy.org/)
 
 ## Usage
 
-```sh
-python train.py
-```
+To colorize a greyscale image using a trained model, invoke *colorize.py* and supply both the desired input image path and the saved model path.
 
 ```sh
-python test.py 'path/to/input/image'
+python colorize.py 'path/to/input/image' 'path/to/saved/model'
+```
+
+To train a generative model to colorize images invoke *train.py* and supply a directory path containing a myriad of training examples. I suggest using a minimum of one million images. These images ough to be of the three-channel jpeg kind. Remember to check whether the images you have obtained are truly jpeg compressed. Often times creators of datasets will simply change the extensions of their images regardless of their types to ".jpg" without altering the actual data. 
+
+```sh
+python train.py 'path/to/training/dir'
 ```
 
 ## Files

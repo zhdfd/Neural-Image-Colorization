@@ -1,7 +1,6 @@
 import argparse
 import discriminator
 import generator
-from helpers import Helpers
 import tensorflow as tf
 from trainer import Trainer
 

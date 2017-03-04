@@ -21,12 +21,6 @@ class Helpers:
     def __init__(self):
         pass
 
-    @staticmethod
-    def add_gradient_summary(grad, var):
-        if grad is not None:
-            #tf.summary.histogram(var.op.name + "/gradient", grad)
-            pass
-
     # Checks for training data to see if it's missing or not. Asks to download if missing.
     @staticmethod
     def check_for_examples():
@@ -76,6 +70,29 @@ class Helpers:
         crop_img = img[yy: yy + short_edge, xx: xx + short_edge]
         resized_img = skimage.transform.resize(crop_img, (shape[0], shape[1]))
         return resized_img, shape
+
+    # Returns a resized numpy array of an image specified by its path
+    @staticmethod
+    def load_img_to(path, height=None, width=None):
+        # Load image
+        img = skimage.io.imread(path) / 255.0
+        if height is not None and width is not None:
+            ny = height
+            nx = width
+        elif height is not None:
+            ny = height
+            nx = img.shape[1] * ny / img.shape[0]
+        elif width is not None:
+            nx = width
+            ny = img.shape[0] * nx / img.shape[1]
+        else:
+            ny = img.shape[0]
+            nx = img.shape[1]
+
+        if len(img.shape) < 3:
+            img = np.dstack((img, img, img))
+
+        return skimage.transform.resize(img, (ny, nx)), [ny, nx, 3]
 
     # Renders the generated image given a tensorflow session and a variable image (x)
     @staticmethod
