@@ -1,54 +1,40 @@
 import argparse
 import generator
-import discriminator
-from PIL import Image
-import train
+from helpers import Helpers
+import os
 import tensorflow as tf
 
+# Arg parsing
+parser = argparse.ArgumentParser(description='Colorize images using conditional generative adversarial networks.')
+parser.add_argument('input', help='path to input image you would like to colorize (i.e., "~/Desktop/input.jpg")')
+parser.add_argument('model', help='path to saved model (i.e., "lib/generator")')
+args = parser.parse_args()
+args.input = os.path.abspath(args.input)
 
-#
-def parse_args():
-    parser = argparse.ArgumentParser(description='Colorize images using conditional generative adversarial networks.')
-    parser.add_argument('--input', action='store_false', help='')
-    parser.add_argument('--train', action='store_false', help='')
-    args = parser.parse_args()
+with tf.Session() as sess:
+    in_rgb, shape = Helpers.load_img(args.input)
+    in_rgb = tf.convert_to_tensor(in_rgb, dtype=tf.float32)
+    in_rgb = tf.expand_dims(in_rgb, axis=0)
 
-    if args.input:
-        colorize_img(args.input)
-    elif args.train:
-        train_model()
-    else:
-        parser.print_help()
+    # Initialize new generative net and build its graph
+    gen = generator.Generator()
+    gen.build(in_rgb)
+    sample = gen.output
 
+    # Ops for transforming a sample into a properly formatted rgb image
+    img = tf.image.rgb_to_hsv(in_rgb)
+    v = tf.slice(img, [0, 0, 0, 2], [1, shape[1], shape[2], 1]) / 255.
+    colored_sample = tf.image.hsv_to_rgb(tf.concat(axis=3, values=[sample, tf.multiply(v, 255.)])) / 255.
 
-#
-def colorize_img(file_path):
-    if not train.Trainer.is_trained():
-        print("This model is not yet trained. Rerun colorize.py and invoke --train to resolve this.")
-        exit(1)
+    # Initialize the TensorFlow session and restore the previously trained model
+    sess.run(tf.global_variables_initializer())
+    saved_path = args.model
+    saver = tf.train.Saver()
+    saver.restore(sess, saved_path)
 
-    filename_queue = tf.train.string_input_producer([file_path])
-    reader = tf.WholeFileReader()
-    _, data = reader.read(filename_queue)
-    in_image = tf.image.decode_jpeg(data, channels=1)
+    # Generate colored sample and save it
+    rgb = sess.run(colored_sample)
+    Helpers.render_img(rgb)
 
-    gen_net = generator.GenerativeNet()
-    gen_net.restore('model')
-    colorized_image = gen_net.generate(in_image)
-    out_image = tf.image.encode_jpeg(colorized_image, format='rgb')
-
-    with tf.Session() as sess:
-        img = sess.run(out_image)
-        img = Image.fromarray(img, "RGB")
-        img.save('')
-        print("")
-
-
-#
-def train_model():
-    gen_net = generator.GenerativeNet()
-    disc_net = discriminator.DiscriminativeNet()
-    train.Trainer.train(gen_net, disc_net)
-
-
-parse_args()
+    # FIN
+    sess.close()

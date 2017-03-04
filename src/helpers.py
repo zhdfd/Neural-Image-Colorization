@@ -2,6 +2,9 @@ import numpy as np
 import os
 import tensorflow as tf
 import time
+import skimage
+import skimage.io
+import skimage.transform
 from scipy.misc import toimage
 import urllib.request as request
 import zipfile
@@ -56,6 +59,23 @@ class Helpers:
     @staticmethod
     def get_training_dir():
         return TRAINING_DIR
+
+    # Returns a numpy array of an image specified by its path
+    @staticmethod
+    def load_img(path):
+        # Load image [height, width, depth]
+        img = skimage.io.imread(path) / 255.0
+        assert (0 <= img).all() and (img <= 1.0).all()
+
+        # Crop image from center
+        short_edge = min(img.shape[:2])
+        yy = int((img.shape[0] - short_edge) / 2)
+        xx = int((img.shape[1] - short_edge) / 2)
+        shape = list(img.shape)
+
+        crop_img = img[yy: yy + short_edge, xx: xx + short_edge]
+        resized_img = skimage.transform.resize(crop_img, (shape[0], shape[1]))
+        return resized_img, shape
 
     # Renders the generated image given a tensorflow session and a variable image (x)
     @staticmethod
