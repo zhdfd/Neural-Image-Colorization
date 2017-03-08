@@ -6,10 +6,9 @@ from trainer import Trainer
 
 # Model hyperparamaters
 opts = {
-    'batch_size': 4,
+    'batch_size': 1,
     'iterations': 1200000,
-    'learning_rate': .0002,
-    'model_path': None,  # path of previously trained model to continue training from
+    'learning_rate': 5e-5,
     'print_every': 100,
     'save_every': 10000,
     'training_height': 256,
@@ -25,6 +24,7 @@ def parse_args():
 
     # Parse command line arguments to assign to the global opt variable
     parser = argparse.ArgumentParser(description='colorize images using conditional generative adversarial networks')
+    #parser.add_argument("model_path", help='')
     for opt_name, value in opts.items():
         parser.add_argument("--%s" % opt_name, default=value)
 
@@ -32,6 +32,8 @@ def parse_args():
     args = parser.parse_args()
     for opt_name, _ in opts.items():
         opts[opt_name] = getattr(args, opt_name)
+
+    #opts['model_path'] = args.model_path
 
 parse_args()
 with tf.Session() as sess:

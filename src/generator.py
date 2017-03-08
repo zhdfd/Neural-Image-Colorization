@@ -79,7 +79,7 @@ class Generator(net.Net):
         """
 
         conv = self.__upsample_layer(inputs, out_size, name, act=act, norm=norm, drop=drop)
-        join = tf.add(conv, skip)
+        join = tf.concat([conv, skip], 3)
         return join
 
     # Batch normalize inputs to reduce covariate shift and improve the efficiency of training

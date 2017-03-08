@@ -24,19 +24,7 @@ class Helpers:
     # Checks for training data to see if it's missing or not. Asks to download if missing.
     @staticmethod
     def check_for_examples():
-        # Ask to unzip training data if a previous attempt was made
-        zip_path = os.path.abspath(CURRENT_PATH + '/../lib/train2014.zip')
-        if os.path.isfile(zip_path):
-            Helpers.__ask_to_unzip(zip_path)
-
-        # Ask to download training data if the training dir does not exist or does not contain the needed files
-        if not os.path.isdir(TRAINING_DIR):
-            Helpers.ask_to_download()
-        else:
-            training_files = os.listdir(TRAINING_DIR)
-            num_training_files = len(training_files)
-            if num_training_files <= 1:
-                Helpers.ask_to_download()
+        pass
 
     @staticmethod
     def exit_program(rc=0, message="Exiting the program.."):
@@ -108,44 +96,3 @@ class Helpers:
 
         if path_out:
             toimage(shaped_img).save(path_out)
-
-    # Asks on stdout to download MSCOCO data. Downloads if response is 'y'
-    @staticmethod
-    def ask_to_download():
-        print("You've requested to train a new model. However, you've yet to download the training data.")
-
-        answer = 0
-        while answer is not 'y' and answer is not 'N':
-            answer = input("Would you like to download the 13 GB file? [y/N] ").replace(" ", "")
-
-        # Download weights if yes, else exit the program
-        if answer == 'y':
-            print("Downloading from %s. Please be patient..." % TRAINING_URL)
-
-            if not os.path.isdir(LIB_DIR):
-                os.makedirs(LIB_DIR)
-
-            zip_save_path = LIB_DIR + 'train2014.zip'
-            request.urlretrieve(TRAINING_URL, zip_save_path)
-            Helpers.ask_to_unzip(zip_save_path)
-        elif answer == 'N':
-            Helpers.exit_program()
-
-    # Asks on stdout to unzip a given zip file path. Unizips if response is 'y'
-    @staticmethod
-    def ask_to_unzip(path):
-        answer = 0
-        while answer is not 'y' and answer is not 'N':
-            answer = input("The application requires the file to be unzipped. Unzip? [y/N] ").replace(" ", "")
-
-        if answer == 'y':
-            if not os.path.isdir(TRAINING_DIR):
-                os.makedirs(TRAINING_DIR)
-
-            print("Unzipping file..")
-            zip_ref = zipfile.ZipFile(path, 'r')
-            zip_ref.extractall(CURRENT_PATH + '/../lib/')
-            zip_ref.close()
-            os.remove(path)
-        else:
-            Helpers.exit_program()

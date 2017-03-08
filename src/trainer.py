@@ -16,7 +16,7 @@ class Trainer:
         self.lib_dir = Helpers.get_lib_dir()
         self.session = session
 
-        # Download training data if there is none
+        # Check if there are training examples available
         Helpers.check_for_examples()
 
         # Assign each option as self.option_title = value
@@ -90,9 +90,9 @@ class Trainer:
         start_time = time.time()
 
         saver = tf.train.Saver(gen_vars)
-        if self.model_path:
-            saver = tf.train.Saver()
-            saver.restore(self.session, self.model_path)
+        #if self.model_path:
+        #    saver = tf.train.Saver()
+        #    saver.restore(self.session, self.model_path)
 
         merged = tf.summary.merge_all()
         train_writer = tf.summary.FileWriter('log/train', self.session.graph)
