@@ -1,11 +1,12 @@
 from helpers import Helpers
+import logging
 import os
 import tensorflow as tf
 import time
 
 EPSILON = 1e-10
-DISC_GRAD_CLIP = .01
-DISC_PER_GEN = 5
+DISC_GRAD_CLIP = .00001
+DISC_PER_GEN = 1
 RMSPROP_DECAY = .9
 
 
@@ -16,8 +17,9 @@ class Trainer:
         self.lib_dir = Helpers.get_lib_dir()
         self.session = session
 
-        # Check if there are training examples available
+        # Check if there are training examples available and config logging
         Helpers.check_for_examples()
+        Helpers.config_logging()
 
         # Assign each option as self.option_title = value
         for key, value in opts.items():
@@ -44,7 +46,7 @@ class Trainer:
         # Optimization ops for the discriminator
         disc_loss = tf.reduce_mean(prob_target - prob_sample)
         disc_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='discriminator')
-        disc_opt = tf.train.RMSPropOptimizer(self.learning_rate, decay=RMSPROP_DECAY)
+        disc_opt = tf.train.AdamOptimizer(self.learning_rate, beta1=.5)
         disc_grads_ = disc_opt.compute_gradients(disc_loss, disc_vars)
         disc_grads = [(tf.clip_by_value(grad, -DISC_GRAD_CLIP, DISC_GRAD_CLIP), var) for grad, var in disc_grads_]
         disc_update = disc_opt.apply_gradients(disc_grads)
@@ -53,7 +55,7 @@ class Trainer:
         gen_loss = tf.reduce_mean(prob_sample)
         tf.summary.scalar('Generator Loss', gen_loss)
         gen_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='generator')
-        gen_opt = tf.train.RMSPropOptimizer(self.learning_rate, decay=RMSPROP_DECAY)
+        gen_opt = tf.train.AdamOptimizer(self.learning_rate, beta1=.5)
         gen_grads_ = gen_opt.compute_gradients(gen_loss, gen_vars)
         gen_grads = [(tf.clip_by_value(grad, -1., 1.), var) for grad, var in gen_grads_]
         gen_update = gen_opt.apply_gradients(gen_grads)
@@ -83,17 +85,13 @@ class Trainer:
         colored_sample = tf.image.hsv_to_rgb(tf.concat(axis=3, values=[sample, tf.multiply(v_, 255.)])) / 255.
 
         # Start session and begin threading
-        print("Initializing session and begin threading..")
+        logging.info("Initializing session and begin threading..")
         self.session.run(tf.global_variables_initializer())
         coord = tf.train.Coordinator()
         threads = tf.train.start_queue_runners(coord=coord)
         start_time = time.time()
 
         saver = tf.train.Saver(gen_vars)
-        #if self.model_path:
-        #    saver = tf.train.Saver()
-        #    saver.restore(self.session, self.model_path)
-
         merged = tf.summary.merge_all()
         train_writer = tf.summary.FileWriter('log/train', self.session.graph)
 
@@ -116,7 +114,7 @@ class Trainer:
                     total_loss = g_loss + d_loss
                     log1 = "Epoch %06d || Total Loss %.010f || " % (i, total_loss)
                     log2 = "Generator Loss %.010f || Discriminator Loss %.010f" % (g_loss, d_loss)
-                    print(log1 + log2)
+                    logging.info(log1 + log2)
 
                     # test out delete when done
                     # _z_i = z.eval()
@@ -137,7 +135,7 @@ class Trainer:
 
         # Alert that training has been completed and print the run time
         elapsed = time.time() - start_time
-        print("Training complete. The session took %.2f seconds to complete." % elapsed)
+        logging.info("Training complete. The session took %.2f seconds to complete." % elapsed)
         coord.request_stop()
         coord.join(threads)
 
@@ -162,6 +160,6 @@ class Trainer:
         return img
 
     def __save_model(self, saver, path):
-        print("Proceeding to save weights at '%s'" % path)
+        logging.info("Proceeding to save weights at '%s'" % path)
         saver.save(self.session, path)
-        print("Weights have been saved.")
+        logging.info("Weights have been saved.")

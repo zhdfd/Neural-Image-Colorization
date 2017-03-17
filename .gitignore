@@ -5,3 +5,4 @@ lib
 !lib/readme_examples
 output/
 log/
+*.log

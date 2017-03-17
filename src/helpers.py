@@ -1,3 +1,4 @@
+import logging
 import numpy as np
 import os
 import tensorflow as tf
@@ -6,8 +7,6 @@ import skimage
 import skimage.io
 import skimage.transform
 from scipy.misc import toimage
-import urllib.request as request
-import zipfile
 
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 OUT_PATH = os.path.abspath(DIR_PATH + '/../output/out_%.0f.jpg' % time.time())
@@ -27,8 +26,17 @@ class Helpers:
         pass
 
     @staticmethod
+    def config_logging():
+        log_dir = DIR_PATH + '/../log/'
+        if not os.path.isdir(log_dir):
+            os.makedirs(log_dir)
+            print('Directory "%s" was created for logging.' % log_dir)
+        log_path = ''.join([log_dir, str(time.time()), '.log'])
+        logging.basicConfig(filename=log_path, level=logging.INFO)
+
+    @staticmethod
     def exit_program(rc=0, message="Exiting the program.."):
-        print(message)
+        logging.info(message)
         tf.get_default_session().close()
         exit(rc)
 
